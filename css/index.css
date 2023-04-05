@@ -1,0 +1,19 @@
+.app-body {
+  margin-top: 0;
+  height: 100%;
+}
+
+.account {
+  word-wrap: normal;
+  overflow-wrap: break-word;
+  font-size: 0.8em;
+}
+
+.balance {
+  word-wrap: normal;
+  overflow-wrap: break-word;
+  font-size: 1.2em;
+  font-weight: bold;
+  padding: 0.5rem 0;
+
+}

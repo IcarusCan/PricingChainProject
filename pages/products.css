@@ -1,0 +1,19 @@
+.products-list {
+  flex-basis: 0;
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+
+.product-detail {
+  flex-basis: 0;
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+
+.product-image {
+  width: 12vw;
+}
+
+tr.active {
+  background: lightskyblue !important;
+}

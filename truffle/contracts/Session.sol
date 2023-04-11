@@ -99,12 +99,7 @@ contract Session {
         _sessions = newSession;
     }
 
-    function startSession()
-        external
-        _instate(SessionState.CREATE)
-        _onlyAdmin
-        nonReentrant
-    {
+    function startSession() external _instate(SessionState.CREATE) _onlyAdmin {
         _sessions.currentState = SessionState.START;
         emit SessionStarted(address(this), SessionState.START);
     }
@@ -115,10 +110,6 @@ contract Session {
         address _currentBidder = msg.sender;
         address _sessionAddr = address(this);
         uint256 oldPrice;
-
-        require(_currentBidder != address(0), "Session: Bidder addr(0)");
-
-        require(_newPrice > 0, "Session: _price must be greater than 0");
 
         if (!MainContractInstance.hasBid(_currentBidder, _sessionAddr)) {
             MainContractInstance.setHasBid(_currentBidder, _sessionAddr);
@@ -140,19 +131,14 @@ contract Session {
         emit SessionPricing(_sessionAddr, _currentBidder, oldPrice, _newPrice);
     }
 
-    function stopSession()
-        external
-        _instate(SessionState.PRICING)
-        _onlyAdmin
-        nonReentrant
-    {
+    function stopSession() external _instate(SessionState.PRICING) _onlyAdmin {
         _sessions.currentState = SessionState.STOP;
         emit SessionStopped(address(this), SessionState.STOP);
     }
 
     function closeSession(
         uint256 _actual
-    ) external _instate(SessionState.STOP) _onlyAdmin nonReentrant {
+    ) external _instate(SessionState.STOP) _onlyAdmin {
         uint256 _participantCount = _bidderCount;
         uint256 _errorOfId;
         uint256 _errorSum;
@@ -249,7 +235,7 @@ contract Session {
         require(
             _sessions.currentState == SessionState.START ||
                 _sessions.currentState == SessionState.PRICING,
-            "Session: Not allow with current session state!"
+            "Session: State must be START or PRICING!"
         );
         _;
     }
@@ -271,6 +257,7 @@ contract Session {
     }
 
     modifier _onlyAdmin() {
+        require(admin != address(0), "Session: Invalid address 0!");
         require(admin == msg.sender, "Session: Only admin can do this!");
         _;
     }

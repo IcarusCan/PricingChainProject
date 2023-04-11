@@ -43,13 +43,63 @@ contract Main {
         admin = msg.sender;
         uint256 accountsLength = _accounts.length;
         for (uint256 i = 1; i < accountsLength; i++) {
-            registerByAdmin(_accounts[i]);
+            whitelisted(_accounts[i]);
         }
     }
 
+    // Register/update user name and email by registed participants
+    function register(
+        string calldata _name,
+        string calldata _email
+    ) external _onlyRegistered {
+        address account = msg.sender;
+        require(!_completeAccount[account], "Main: Your account is completed!");
+        _participants[account].name = _name;
+        _participants[account].email = _email;
+        _completeAccount[account] = true;
+    }
+
+    // Add a Session Contract
+    function addSession(
+        address _maincontract,
+        string calldata _productName,
+        string calldata _description,
+        string calldata _imageHashes
+    ) external _onlyAdmin nonReentrant {
+        // New instance of Session each time called
+        Session newSession = new Session(
+            admin,
+            _maincontract,
+            _productName,
+            _description,
+            _imageHashes
+        );
+        address sessionAddr = address(newSession);
+        bytes32 sessionHash = newSession.SessionHash();
+
+        //save address by ID
+        _sessions[_sessionId] = sessionAddr;
+        //save session hash to Main contract
+        _sessionHashes[sessionAddr] = sessionHash;
+
+        emit NewSessionCreated(_sessionId, sessionAddr, sessionHash);
+        _sessionId++;
+    }
+
+    // For admin to add a new participant
+    function newRegister(
+        address _newParticipant
+    ) external _onlyAdmin nonReentrant returns (bool) {
+        whitelisted(_newParticipant);
+        return true;
+    }
+
     // Register new participant by admin
-    function registerByAdmin(address _newParticipant) private _onlyAdmin {
-        require(_newParticipant != address(0), "Main: Invalid participant");
+    function whitelisted(address _newParticipant) private _onlyAdmin {
+        require(
+            !registered[_newParticipant],
+            "Main: Participant is whitelisted!"
+        );
 
         //Update map to IParticipant
         _participants[_newParticipant].account = _newParticipant;
@@ -57,18 +107,6 @@ contract Main {
         // Update to save address of participant
         _iParticipants.push(_newParticipant);
         registered[_newParticipant] = true;
-    }
-
-    // Register/update user name and email by registed participants
-    function register(
-        string calldata _name,
-        string calldata _email
-    ) external _onlyRegistered nonReentrant {
-        address account = msg.sender;
-        require(!_completeAccount[account], "Main: Your account is completed!");
-        _participants[account].name = _name;
-        _participants[account].email = _email;
-        _completeAccount[account] = true;
     }
 
     // Get participant by address
@@ -97,33 +135,6 @@ contract Main {
     // Get address of participant by index (use to loop through the list of participants)
     function iParticipants(uint256 _index) external view returns (address) {
         return _iParticipants[_index];
-    }
-
-    // Add a Session Contract
-    function addSession(
-        address _maincontract,
-        string calldata _productName,
-        string calldata _description,
-        string calldata _imageHashes
-    ) external _onlyAdmin nonReentrant {
-        // New instance of Session each time called
-        Session newSession = new Session(
-            admin,
-            _maincontract,
-            _productName,
-            _description,
-            _imageHashes
-        );
-        address sessionAddr = address(newSession);
-        bytes32 sessionHash = newSession.SessionHash();
-
-        //save address by ID
-        _sessions[_sessionId] = sessionAddr;
-        //save session hash to Main contract
-        _sessionHashes[sessionAddr] = sessionHash;
-
-        emit NewSessionCreated(_sessionId, sessionAddr, sessionHash);
-        _sessionId++;
     }
 
     //Check that participant addr has bidded
@@ -166,7 +177,7 @@ contract Main {
     modifier _onlyRegistered() {
         require(
             _participants[msg.sender].account == msg.sender,
-            "Main: Only registered user can update their info!"
+            "Main: Only registered user can do it!"
         );
         _;
     }

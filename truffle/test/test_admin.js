@@ -27,7 +27,7 @@ contract("Main", function (accounts) {
     it("1.1 Only admin can access this function", async () => {
       let newAcc = web3.eth.accounts.create().address;
       try {
-        await mainInstance.newRegister(newAcc, { from: newAcc });
+        await mainInstance.addWhitelist(newAcc, { from: newAcc });
       } catch (e) {
         assert.equal(e.reason, "Main: Only admin can do this!");
       }
@@ -37,8 +37,8 @@ contract("Main", function (accounts) {
       let newAcc = web3.eth.accounts.create().address;
       let newAcc2 = web3.eth.accounts.create().address;
       const txPromises = [
-        mainInstance.newRegister(newAcc, { from: admin }),
-        mainInstance.newRegister(newAcc2, { from: admin }),
+        mainInstance.addWhitelist(newAcc, { from: admin }),
+        mainInstance.addWhitelist(newAcc2, { from: admin }),
       ];
 
       try {
@@ -50,7 +50,7 @@ contract("Main", function (accounts) {
 
     it("1.3 Participant has not be whitelisted yet", async () => {
       try {
-        await mainInstance.newRegister(accounts[1], { from: admin });
+        await mainInstance.addWhitelist(accounts[1], { from: admin });
       } catch (e) {
         assert.equal(e.reason, "Main: Participant is whitelisted!");
       }
@@ -58,8 +58,8 @@ contract("Main", function (accounts) {
 
     it("1.4 Whitelist a new participant successfully", async () => {
       let newAcc = web3.eth.accounts.create().address;
-      await mainInstance.newRegister(newAcc, { from: admin });
-      let res = await mainInstance.registered(newAcc);
+      await mainInstance.addWhitelist(newAcc, { from: admin });
+      let res = await mainInstance.hasWhitelisted(newAcc);
       return assert.isTrue(res === true);
     });
   });

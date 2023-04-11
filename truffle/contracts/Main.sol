@@ -18,7 +18,7 @@ contract Main {
     mapping(address => IParticipant) private _participants;
     address[] private _iParticipants;
 
-    mapping(address => bool) public registered;
+    mapping(address => bool) public hasWhitelisted;
     mapping(address => bool) public _completeAccount;
 
     //map to save session addr
@@ -43,7 +43,7 @@ contract Main {
         admin = msg.sender;
         uint256 accountsLength = _accounts.length;
         for (uint256 i = 1; i < accountsLength; i++) {
-            whitelisted(_accounts[i]);
+            whitelist(_accounts[i]);
         }
     }
 
@@ -87,17 +87,17 @@ contract Main {
     }
 
     // For admin to add a new participant
-    function newRegister(
+    function addWhitelist(
         address _newParticipant
     ) external _onlyAdmin nonReentrant returns (bool) {
-        whitelisted(_newParticipant);
+        whitelist(_newParticipant);
         return true;
     }
 
     // Register new participant by admin
-    function whitelisted(address _newParticipant) private _onlyAdmin {
+    function whitelist(address _newParticipant) private _onlyAdmin {
         require(
-            !registered[_newParticipant],
+            !hasWhitelisted[_newParticipant],
             "Main: Participant is whitelisted!"
         );
 
@@ -106,7 +106,7 @@ contract Main {
 
         // Update to save address of participant
         _iParticipants.push(_newParticipant);
-        registered[_newParticipant] = true;
+        hasWhitelisted[_newParticipant] = true;
     }
 
     // Get participant by address

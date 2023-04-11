@@ -106,7 +106,7 @@ contract Session {
 
     function pricingSession(
         uint256 _newPrice
-    ) external _pricing _isRegistered _isCompleteRegistered nonReentrant {
+    ) external _pricing _isWhitelisted _isCompleteRegistered nonReentrant {
         address _currentBidder = msg.sender;
         address _sessionAddr = address(this);
         uint256 oldPrice;
@@ -240,9 +240,9 @@ contract Session {
         _;
     }
 
-    modifier _isRegistered() {
+    modifier _isWhitelisted() {
         require(
-            MainContractInstance.registered(msg.sender),
+            MainContractInstance.hasWhitelisted(msg.sender),
             "Session: Only registered address can do this!"
         );
         _;

@@ -11,8 +11,8 @@ contract Main {
         address account;
         string name;
         string email;
-        uint256 bidCount;
-        uint256 bidDeviation;
+        uint32 bidCount;
+        uint32 bidDeviation;
     }
     //map to IParticipant
     mapping(address => IParticipant) private _participants;
@@ -22,10 +22,9 @@ contract Main {
     mapping(address => bool) public _completeAccount;
 
     //map to save session addr
-    mapping(uint256 => address) private _sessions;
+    address[] private _sessions;
     //map to save session hash
     mapping(address => bytes32) private _sessionHashes;
-    uint256 private _sessionId;
 
     //hasBis[bidderAddr][sessionAddr] --> check bidder has bid or not
     mapping(address => mapping(address => bool)) private _hasBid;
@@ -34,9 +33,8 @@ contract Main {
     bool private locked;
 
     event NewSessionCreated(
-        uint256 indexed sessionId,
         address indexed sessionAddress,
-        bytes32 sessionHash
+        bytes32 indexed sessionHash
     );
 
     constructor(address[] memory _accounts) {
@@ -51,7 +49,7 @@ contract Main {
     function register(
         string calldata _name,
         string calldata _email
-    ) external _onlyRegistered {
+    ) external _onlyWhitelisted {
         address account = msg.sender;
         require(!_completeAccount[account], "Main: Your account is completed!");
         _participants[account].name = _name;
@@ -78,12 +76,11 @@ contract Main {
         bytes32 sessionHash = newSession.SessionHash();
 
         //save address by ID
-        _sessions[_sessionId] = sessionAddr;
+        _sessions.push(sessionAddr);
         //save session hash to Main contract
         _sessionHashes[sessionAddr] = sessionHash;
 
-        emit NewSessionCreated(_sessionId, sessionAddr, sessionHash);
-        _sessionId++;
+        emit NewSessionCreated(sessionAddr, sessionHash);
     }
 
     // For admin to add a new participant
@@ -96,6 +93,7 @@ contract Main {
 
     // Register new participant by admin
     function whitelist(address _newParticipant) private _onlyAdmin {
+        require(_newParticipant != admin, "Main: Admin can't be whitelisted!");
         require(
             !hasWhitelisted[_newParticipant],
             "Main: Participant is whitelisted!"
@@ -117,12 +115,12 @@ contract Main {
     }
 
     // Update bidCount of participant
-    function setBidCount(address _addr) external returns (uint256) {
+    function setBidCount(address _addr) external returns (uint32) {
         return _participants[_addr].bidCount++;
     }
 
     // Update bidDeviation of participant
-    function setBidDev(address _addr, uint256 _dev) external returns (uint256) {
+    function setBidDev(address _addr, uint32 _dev) external returns (uint32) {
         _participants[_addr].bidDeviation = _dev;
         return _dev;
     }
@@ -133,7 +131,7 @@ contract Main {
     }
 
     // Get address of participant by index (use to loop through the list of participants)
-    function iParticipants(uint256 _index) external view returns (address) {
+    function iParticipants(uint32 _index) external view returns (address) {
         return _iParticipants[_index];
     }
 
@@ -156,7 +154,7 @@ contract Main {
 
     // Get number of sessions
     function nSessions() external view returns (uint256) {
-        return _sessionId;
+        return _sessions.length;
     }
 
     // Get address of session by index (use to loop through the list of sessions)
@@ -174,9 +172,9 @@ contract Main {
         _;
     }
 
-    modifier _onlyRegistered() {
+    modifier _onlyWhitelisted() {
         require(
-            _participants[msg.sender].account == msg.sender,
+            hasWhitelisted[msg.sender],
             "Main: Only registered user can do it!"
         );
         _;

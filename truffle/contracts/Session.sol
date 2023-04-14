@@ -23,7 +23,7 @@ contract Session {
     //Struct to hold bidder info
     struct Bidder {
         address account;
-        uint256 price;
+        uint32 price;
     }
 
     //State of session
@@ -39,16 +39,16 @@ contract Session {
     struct ISession {
         Product product; // 1 product/session
         //Bidder[] bidded;
-        uint256 suggestedPrice;
-        uint256 finalPrice;
+        uint32 suggestedPrice;
+        uint32 finalPrice;
         SessionState currentState;
     }
     ISession private _sessions;
 
     //Map to save bidder info
-    mapping(uint256 => Bidder) private _bidders;
-    mapping(address => uint256) private _idOf;
-    uint256 private _bidderCount;
+    mapping(uint8 => Bidder) private _bidders;
+    mapping(address => uint8) private _idOf;
+    uint8 private _bidderCount;
 
     //Event that need to be listened
     event SessionStarted(
@@ -62,13 +62,13 @@ contract Session {
     event SessionPricing(
         address indexed sessionAddr,
         address indexed account,
-        uint256 oldPrice,
-        uint256 newPrice
+        uint32 oldPrice,
+        uint32 newPrice
     );
     event SessionClosed(
         address indexed sessionAddr,
-        uint256 indexed suggestedPrice,
-        uint256 indexed finalPrice
+        uint32 indexed suggestedPrice,
+        uint32 indexed finalPrice
     );
 
     constructor(
@@ -105,11 +105,11 @@ contract Session {
     }
 
     function pricingSession(
-        uint256 _newPrice
+        uint32 _newPrice
     ) external _pricing _isWhitelisted _isCompleteRegistered nonReentrant {
         address _currentBidder = msg.sender;
         address _sessionAddr = address(this);
-        uint256 oldPrice;
+        uint32 oldPrice;
 
         if (!MainContractInstance.hasBid(_currentBidder, _sessionAddr)) {
             MainContractInstance.setHasBid(_currentBidder, _sessionAddr);
@@ -137,80 +137,77 @@ contract Session {
     }
 
     function closeSession(
-        uint256 _actual
+        uint32 _actual
     ) external _instate(SessionState.STOP) _onlyAdmin {
-        uint256 _participantCount = _bidderCount;
-        uint256 _errorOfId;
-        uint256 _errorSum;
-        uint256 _priceSum;
-
+        _sessions.suggestedPrice = calSuggestPrice();
         _sessions.finalPrice = _actual;
         _sessions.currentState = SessionState.CLOSED;
 
-        for (uint256 id = 0; id < _participantCount; id++) {
-            uint256 bidderPrice = _bidders[id].price;
-            address account = _bidders[id].account;
-
-            _errorOfId = _deviationOf(id, _actual);
-            _errorSum += _errorOfId;
-            _priceSum += bidderPrice * (100 - _errorOfId);
-
+        for (uint8 id = 0; id < _bidderCount; id++) {
             //Update IParticipant info setBidCount (addrBidder, bidCount)
-            MainContractInstance.setBidDev(account, _errorOfId);
+            MainContractInstance.setBidDev(
+                _bidders[id].account,
+                calDeviation(id, _actual)
+            );
         }
-
-        _sessions.suggestedPrice =
-            _priceSum /
-            ((100 * _participantCount) - _errorSum);
 
         emit SessionClosed(address(this), _sessions.suggestedPrice, _actual);
     }
 
     //Calculate the deviation of bidder
-    function _deviationOf(
-        uint256 _idBidder,
-        uint256 _actualPrice
-    ) private view _onlyAdmin returns (uint256) {
-        uint256 curDev;
-        uint256 newDev;
-        uint256 calDev;
-        uint256 _participantCount = _bidderCount;
-        address bidderAddr = _bidders[_idBidder].account;
-
+    function calDeviation(
+        uint8 _id,
+        uint32 _actualPrice
+    ) private view _onlyAdmin returns (uint32) {
+        address bidderAddr = _bidders[_id].account;
+        uint32 curPrice = _bidders[_id].price;
+        uint32 newDev;
+        uint32 calDev;
         //Get current deviation of participant
-        curDev = MainContractInstance.participants(bidderAddr).bidDeviation;
+        uint32 curDev = MainContractInstance
+            .participants(bidderAddr)
+            .bidDeviation;
 
         //Calculate new deviation of participant base on actual price
-        if (_actualPrice >= _bidders[_idBidder].price) {
-            newDev =
-                ((_actualPrice - _bidders[_idBidder].price) * 100) /
-                _actualPrice;
+        if (_actualPrice >= curPrice) {
+            newDev = ((_actualPrice - curPrice) * 100) / _actualPrice;
         } else {
-            newDev =
-                ((_bidders[_idBidder].price - _actualPrice) * 100) /
-                _actualPrice;
+            newDev = ((curPrice - _actualPrice) * 100) / _actualPrice;
         }
 
         //Update deviation of participant base on current and new deviation
         calDev =
-            (curDev * _participantCount + newDev) /
-            (_participantCount + 1);
+            (curDev * uint32(_bidderCount) + newDev) /
+            (uint32(_bidderCount) + 1);
 
         return calDev;
     }
 
-    function getBidderCount() external view returns (uint256) {
-        return _bidderCount;
+    function calSuggestPrice() public view returns (uint32) {
+        uint32 _curDev;
+        uint32 _devSum;
+        uint32 _priceSum;
+        uint32 _suggestedPrice;
+
+        for (uint8 id = 0; id < _bidderCount; id++) {
+            uint32 bidderPrice = _bidders[id].price;
+            address account = _bidders[id].account;
+
+            _curDev = MainContractInstance.participants(account).bidDeviation;
+            _devSum += _curDev;
+            _priceSum += bidderPrice * (100 - _curDev);
+        }
+
+        _suggestedPrice = _priceSum / ((100 * uint32(_bidderCount)) - _devSum);
+        return _suggestedPrice;
     }
 
-    function getBidderId(address _bidderAddr) external view returns (uint256) {
+    function getBidderId(address _bidderAddr) external view returns (uint8) {
         require(_bidderAddr != address(0), "Session: Invalid bidderAddr");
         return _idOf[_bidderAddr];
     }
 
-    function getBidderInfo(
-        uint256 _index
-    ) external view returns (Bidder memory) {
+    function getBidderInfo(uint8 _index) external view returns (Bidder memory) {
         return _bidders[_index];
     }
 

@@ -125,7 +125,7 @@ const Sidebar = ({
         profile={profile}
       ></Account>
       <nav class="sidebar-nav">
-        <ul class="nav">
+        {/* <ul class="nav">
           <Profile
             profile={profile}
             register={register}
@@ -144,10 +144,61 @@ const Sidebar = ({
               <i class="nav-icon cui-people"></i> Participants
             </Link>
           </li>
-        </ul>
+        </ul> */}
+        <Viewall
+          profile={profile}
+          register={register}
+          inputProfile={inputProfile}
+          isAdmin={isAdmin}
+        ></Viewall>
       </nav>
     </div>
   );
+};
+
+const Viewall = ({ isAdmin, profile, register, inputProfile }) => {
+  if (isAdmin === true) {
+    return (
+      <ul class="nav">
+        <Profile
+          profile={profile}
+          register={register}
+          inputProfile={inputProfile}
+          isAdmin={isAdmin}
+        ></Profile>
+        <li class="nav-divider"></li>
+        <li class="nav-title">View all</li>
+        <li class="nav-item">
+          <Link class="nav-link" to="/products">
+            <i class="nav-icon cui-balance-scale"></i> Products
+          </Link>
+        </li>
+        <li class="nav-item">
+          <Link class="nav-link" to="/participants">
+            <i class="nav-icon cui-people"></i> Participants
+          </Link>
+        </li>
+      </ul>
+    );
+  } else {
+    return (
+      <ul class="nav">
+        <Profile
+          profile={profile}
+          register={register}
+          inputProfile={inputProfile}
+          isAdmin={isAdmin}
+        ></Profile>
+        <li class="nav-divider"></li>
+        <li class="nav-title">View all</li>
+        <li class="nav-item">
+          <Link class="nav-link" to="/products">
+            <i class="nav-icon cui-balance-scale"></i> Products
+          </Link>
+        </li>
+      </ul>
+    );
+  }
 };
 
 export { Sidebar };

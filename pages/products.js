@@ -110,69 +110,73 @@ const Product = ({ product, newProduct, input, create, isAdmin, fn }) => {
       ) : (
         <></>
       )}
-      <div class="card">
-        <div class="card-header">
-          <strong>Create new session</strong>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-sm-12">
-              <div class="form-group">
-                <label for="name">Product name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="name"
-                  value={newProduct.name}
-                  oninput={(e) => {
-                    input({ field: "name", value: e.target.value });
-                  }}
-                />
+      {isAdmin ? (
+        <div class="card">
+          <div class="card-header">
+            <strong>Create new session</strong>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-sm-12">
+                <div class="form-group">
+                  <label for="name">Product name</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="name"
+                    value={newProduct.name}
+                    oninput={(e) => {
+                      input({ field: "name", value: e.target.value });
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="row">
-            <div class="col-sm-12">
-              <div class="form-group">
-                <label for="description">Product description</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="description"
-                  value={newProduct.description}
-                  oninput={(e) => {
-                    input({ field: "description", value: e.target.value });
-                  }}
-                />
+            <div class="row">
+              <div class="col-sm-12">
+                <div class="form-group">
+                  <label for="description">Product description</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="description"
+                    value={newProduct.description}
+                    oninput={(e) => {
+                      input({ field: "description", value: e.target.value });
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="row">
-            <div class="col-sm-12">
-              <div class="form-group">
-                <label for="image">Product image</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="image"
-                  placeholder="http://"
-                  value={newProduct.image}
-                  oninput={(e) => {
-                    input({ field: "image", value: e.target.value });
-                  }}
-                />
+            <div class="row">
+              <div class="col-sm-12">
+                <div class="form-group">
+                  <label for="image">Product image</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="image"
+                    placeholder="http://"
+                    value={newProduct.image}
+                    oninput={(e) => {
+                      input({ field: "image", value: e.target.value });
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
+          <div class="card-footer">
+            <button type="submit" class="btn btn-primary" onclick={create}>
+              Create
+            </button>
+          </div>
         </div>
-        <div class="card-footer">
-          <button type="submit" class="btn btn-primary" onclick={create}>
-            Create
-          </button>
-        </div>
-      </div>
+      ) : (
+        <></>
+      )}
     </>
   );
 };

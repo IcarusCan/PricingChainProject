@@ -35,7 +35,9 @@ const Participants =
           <table class="table table-hover table-striped">
             <thead>
               <tr>
-                <th scope="col" class="text-center"></th>
+                <th scope="col" class="text-center">
+                  Avatar
+                </th>
                 <th scope="col">Fullname</th>
                 <th scope="col">Email</th>
                 <th scope="col" class="text-center">

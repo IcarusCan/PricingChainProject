@@ -4,7 +4,8 @@ import { Link } from "@hyperapp/router";
 const Fragment = (props, children) => children;
 
 const Profile = ({ profile, register, inputProfile, isAdmin }) => {
-  const hasProfile = profile && profile.nSessions > 0;
+  const hasProfile =
+    profile && (profile.complete === true || profile.nSessions > 0);
   let newProfile = {};
   if (isAdmin) {
     return <></>;

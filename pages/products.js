@@ -33,14 +33,25 @@ const Product = ({ product, newProduct, input, create, isAdmin, fn }) => {
                 <p>{product.description}</p>
               </dd>
 
-              <dt class="col-sm-4">Proposed Price</dt>
-              <dd class="col-sm-8">
-                <p>$ {product.price / 100}</p>
-              </dd>
+              {isAdmin ? (
+                <>
+                  <dt class="col-sm-4">Proposed</dt>
+                  <dd class="col-sm-8">
+                    <p>$ {product.price}</p>
+                  </dd>
+                </>
+              ) : (
+                <>
+                  <dt class="col-sm-4">Your proposed</dt>
+                  <dd class="col-sm-8">
+                    <p>$ {product.price}</p>
+                  </dd>
+                </>
+              )}
 
-              <dt class="col-sm-4">Actual Price</dt>
+              <dt class="col-sm-4">Actual</dt>
               <dd class="col-sm-8">
-                <p>$ {product.finalPrice / 100}</p>
+                <p>$ {product.finalPrice}</p>
               </dd>
 
               <dt class="col-sm-4">Status</dt>
@@ -181,7 +192,7 @@ const Product = ({ product, newProduct, input, create, isAdmin, fn }) => {
   );
 };
 
-const ProductRow = ({ product, index, select, currentIndex }) => (
+const ProductRow = ({ product, index, select, currentIndex, isAdmin }) => (
   <tr
     onclick={(e) => select(index)}
     class={index === currentIndex ? "active" : ""}
@@ -189,8 +200,15 @@ const ProductRow = ({ product, index, select, currentIndex }) => (
     <th scope="row">{product.no}</th>
     <td>{product.name}</td>
     <td>{product.description} </td>
-    <td>$ {product.price}</td>
-    <td>$ {product.finalPrice}</td>
+    {isAdmin ? (
+      <>
+        <td>$ {product.price}</td>
+        <td>$ {product.finalPrice}</td>
+      </>
+    ) : (
+      <td>$ {product.price}</td>
+    )}
+
     <td>{product.status}</td>
   </tr>
 );
@@ -209,8 +227,14 @@ const Products =
                 <th scope="col">#</th>
                 <th scope="col">Product</th>
                 <th scope="col">Description</th>
-                <th scope="col">Proposed price</th>
-                <th scope="col">Actual price</th>
+                {isAdmin ? (
+                  <>
+                    <th scope="col">Proposed</th>
+                    <th scope="col">Actual</th>
+                  </>
+                ) : (
+                  <th scope="col">Your proposed</th>
+                )}
                 <th scope="col">Status</th>
               </tr>
             </thead>

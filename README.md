@@ -49,4 +49,8 @@ All function connecting with Smart contract are located in `index.js` with `TODO
 
 # Ganache-cli to save private key
 
-ganache-cli -d --acctKeys keys.json
+ganache -d --acctKeys keys.json
+
+# Reset network before start a new working env
+
+truffle networks --clean

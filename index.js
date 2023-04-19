@@ -27,7 +27,8 @@ if (window.ethereum) {
 //Function to handle account change
 function handleAccountsChanged(accounts) {
   web3js.eth.defaultAccount = accounts[0];
-  window.location.reload();
+  // window.location.reload();
+  window.location.href = "/products";
 }
 
 const mainContract = new web3js.eth.Contract(Main.abi, config.mainContract);
@@ -78,6 +79,10 @@ const contractFunctions = {
 
   // Get address of session by index (use to loop through the list of sessions)
   sessions: (index) => mainContract.methods.sessions(index).call,
+
+  //Check complete profile
+  completeAccount: (address) =>
+    mainContract.methods.completeAccount(address).call,
 };
 
 const actions = {
@@ -130,101 +135,98 @@ const actions = {
 
   selectProduct: (i) => (state) => {
     return {
+      ...state,
       currentProductIndex: i,
     };
   },
 
   sessionFn:
     ({ action, data }) =>
-    async (state, {}) => {
+    (state, actions) => {
       let sessionAddr = state.sessions[state.currentProductIndex].id;
       let sessionInstance = new web3js.eth.Contract(Session.abi, sessionAddr);
 
       switch (action) {
         case "start":
-          //TODO: Handle event when User Start a new session
-          try {
-            let sessionStartedEvent =
-              await sessionInstance.events.SessionStarted();
-            sessionStartedEvent.on("data", (event) => {
-              console.log(
-                "sessionStartedEvent event emitted: ",
-                event.returnValues
-              );
-            });
-
-            await sessionInstance.methods.startSession().send({
+          sessionInstance.methods
+            .startSession()
+            .send({
               from: state.admin,
               gas: 15000000,
               gasPrice: "2000000000",
+            })
+            .then(() => {
+              actions.getSessions();
+            })
+            .catch((error) => {
+              console.log(error);
             });
-          } catch (error) {
-            console.log(error);
-          }
           break;
 
         case "stop":
-          //TODO: Handle event when User Stop a session
-          try {
-            let sessionStoppeddEvent =
-              await sessionInstance.events.SessionStopped();
-            sessionStoppeddEvent.on("data", (event) => {
-              console.log(
-                "sessionStoppeddEvent event emitted: ",
-                event.returnValues
-              );
-            });
-
-            await sessionInstance.methods.stopSession().send({
+          sessionInstance.methods
+            .stopSession()
+            .send({
               from: state.admin,
               gas: 15000000,
               gasPrice: "2000000000",
+            })
+            .then(() => {
+              actions.getSessions();
+            })
+            .catch((error) => {
+              console.log(error);
             });
-          } catch (error) {
-            console.log(error);
-          }
           break;
 
         case "pricing":
           //TODO: Handle event when User Pricing a product
           //The inputed Price is stored in `data`
-          try {
-            let sessionPricingEvent =
-              await sessionInstance.events.SessionPricing();
-            sessionPricingEvent.on("data", (event) => {
-              console.log("SessionPricing event emitted: ", event.returnValues);
-            });
-
-            await sessionInstance.methods.pricingSession(Number(data)).send({
+          sessionInstance.methods
+            .pricingSession(Number(data))
+            .send({
               from: state.account,
               gas: 15000000,
               gasPrice: "2000000000",
+            })
+            .then(() => {
+              actions.getAccount();
+            })
+            .then(() => {
+              actions.getSessions();
+            })
+            .catch((error) => {
+              console.log(error);
             });
-          } catch (error) {
-            console.log(error);
-          }
           break;
 
         case "close":
           //TODO: Handle event when User Close a session
           //The inputed Price is stored in `data`
-          try {
-            let sessionClosedEvent = sessionInstance.events.SessionClosed();
-            sessionClosedEvent.on("data", (event) => {
-              console.log(
-                "sessionClosedEvent event emitted: ",
-                event.returnValues
-              );
-            });
+          // let sessionClosedEvent = sessionInstance.events.SessionClosed();
+          // sessionClosedEvent.on("data", (event) => {
+          //   console.log(
+          //     "sessionClosedEvent event emitted: ",
+          //     event.returnValues
+          //   );
+          // });
 
-            await sessionInstance.methods.closeSession(Number(data)).send({
+          sessionInstance.methods
+            .closeSession(Number(data))
+            .send({
               from: state.admin,
               gas: 15000000,
               gasPrice: "2000000000",
+            })
+            .then(() => {
+              actions.getSessions();
+            })
+            .then(() => {
+              actions.getParticipants();
+            })
+            .catch((error) => {
+              console.log(error);
             });
-          } catch (error) {
-            console.log(error);
-          }
           break;
 
         default:
@@ -240,12 +242,15 @@ const actions = {
     let balance = await contractFunctions.getBalance(accounts[0]);
     let admin = await contractFunctions.getAdmin();
     let profile = await contractFunctions.participants(accounts[0]).call();
+    let complete = await contractFunctions.completeAccount(accounts[0]).call();
+
     profile = {
       address: profile.account,
       fullname: profile.name,
       email: profile.email,
       nSessions: profile.bidCount,
       deviation: profile.bidDeviation,
+      complete: complete,
     };
 
     actions.setAccount({
@@ -301,7 +306,6 @@ const actions = {
   },
 
   register: () => async (state, actions) => {
-    console.log("state", state);
     // TODO: Register new participant
     await contractFunctions.register(
       state.profile.fullname,
@@ -309,18 +313,20 @@ const actions = {
       state.account
     );
 
-    let profile = {};
+    let profile = { complete: false };
     // TODO: And get back the information of created participant
     let participant = await contractFunctions
       .participants(state.account)
       .call();
 
     profile = {
+      ...profile,
       address: participant.account,
       fullname: participant.name,
       email: participant.email,
       nSessions: participant.bidCount,
       deviation: participant.bidDeviation,
+      complete: true,
     };
 
     actions.setProfile(profile);
@@ -341,6 +347,7 @@ const actions = {
     // TODO: And loop through all sessions to get information
 
     for (let index = 0; index < nSession; index++) {
+      console.log("index getSessions:", index);
       // Get session address
       let session = await contractFunctions.sessions(index).call();
       // Load the session contract instance on network
@@ -352,23 +359,24 @@ const actions = {
       // Hint: - Call methods of Session contract to reveal all nessesary information
       //       - Use `await` to wait the response of contract
 
-      let name = ""; // TODO
-      let description = ""; // TODO
-      let image = ""; // TODO
-      let price = 0; // TODO
-      let finalPrice = 0; // TODO
+      let name = "";
+      let description = "";
+      let image = "";
+      let price = 0;
+      let finalPrice = 0;
       let status = "";
 
       let sessionInfo = await contract.methods.getSessionInfo().call();
       let accounts = await contractFunctions.getAccounts();
       let admin = await contractFunctions.getAdmin();
 
-      // if (accounts[0] !== admin) {
-      let bidderId = await contract.methods.getBidderId(accounts[0]).call();
-      let bidderInfo = await contract.methods.getBidderInfo(bidderId).call();
-      price = bidderInfo.price;
-      // } else {
-      // }
+      if (accounts[0] !== admin) {
+        let bidderId = await contract.methods.getBidderId(accounts[0]).call();
+        console.log("bidderId", bidderId);
+        let bidderInfo = await contract.methods.getBidderInfo(bidderId).call();
+        console.log("bidderInfo", bidderInfo);
+        price = bidderInfo.price;
+      }
 
       name = sessionInfo.product.name;
       description = sessionInfo.product.description;
@@ -378,20 +386,33 @@ const actions = {
         case "0":
           status = "CREATE";
           break;
+
         case "1":
           status = "START";
           break;
+
         case "2":
           status = "PRICING";
+          if (accounts[0] === admin) {
+            price = await contract.methods.calSuggestPrice().call();
+          }
           break;
+
         case "3":
           status = "STOP";
+          if (accounts[0] === admin) {
+            price = await contract.methods.calSuggestPrice().call();
+          }
           break;
+
         case "4":
           status = "CLOSED";
-          price = sessionInfo.suggestedPrice;
+          if (accounts[0] === admin) {
+            price = sessionInfo.suggestedPrice;
+          }
           finalPrice = sessionInfo.finalPrice;
           break;
+
         default:
           throw console.error("Unknown state!");
       }
@@ -439,7 +460,7 @@ const view = (
         getSessions();
         eventHandler();
       }}
-      onbeforeunload={() => {
+      ondestroy={() => {
         removeEventHandler();
       }}
     >

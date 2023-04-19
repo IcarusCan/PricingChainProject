@@ -35,7 +35,7 @@ const Profile = ({ profile, register, inputProfile, isAdmin }) => {
               <b>Accuracy</b>
             </small>
           </div>
-          <small>{profile.deviation / 100}%</small>
+          <small>{(profile.deviation / 1000).toFixed(2)}%</small>
         </li>
       </>
     ) : (

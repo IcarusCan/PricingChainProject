@@ -19,7 +19,7 @@ const ParticipantRow = (participant) => (
       {participant.nSessions}
     </td>
     <td scope="row" class="align-middle text-center">
-      {participant.deviation / 100} %
+      {(participant.deviation / 1000).toFixed(2)} %
     </td>
     <td scope="row" class="align-middle text-center">
       <code>{participant.address}</code>

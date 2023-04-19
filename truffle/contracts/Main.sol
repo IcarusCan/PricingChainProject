@@ -19,7 +19,7 @@ contract Main {
     address[] private _iParticipants;
 
     mapping(address => bool) public hasWhitelisted;
-    mapping(address => bool) public _completeAccount;
+    mapping(address => bool) public completeAccount;
 
     //map to save session addr
     address[] private _sessions;
@@ -51,10 +51,13 @@ contract Main {
         string calldata _email
     ) external _onlyWhitelisted {
         address account = msg.sender;
-        require(!_completeAccount[account], "Main: Your account is completed!");
+        require(bytes(_name).length > 0, "Main: Name should not be empty");
+        require(bytes(_email).length > 0, "Main: Email should not be empty");
+        require(!completeAccount[account], "Main: Your account is completed!");
+
         _participants[account].name = _name;
         _participants[account].email = _email;
-        _completeAccount[account] = true;
+        completeAccount[account] = true;
     }
 
     // Add a Session Contract
@@ -64,6 +67,19 @@ contract Main {
         string calldata _description,
         string calldata _imageHashes
     ) external _onlyAdmin nonReentrant {
+        require(_maincontract != address(0));
+        require(
+            bytes(_productName).length > 0,
+            "Main: Product name should not be empty"
+        );
+        require(
+            bytes(_description).length > 0,
+            "Main: Description should not be empty"
+        );
+        require(
+            bytes(_imageHashes).length > 0,
+            "Main: Image hashes should not be empty"
+        );
         // New instance of Session each time called
         Session newSession = new Session(
             admin,
@@ -93,6 +109,7 @@ contract Main {
 
     // Register new participant by admin
     function whitelist(address _newParticipant) private _onlyAdmin {
+        require(_newParticipant != address(0));
         require(_newParticipant != admin, "Main: Admin can't be whitelisted!");
         require(
             !hasWhitelisted[_newParticipant],
@@ -158,7 +175,7 @@ contract Main {
     }
 
     // Get address of session by index (use to loop through the list of sessions)
-    function sessions(uint256 _index) external view returns (address) {
+    function sessions(uint32 _index) external view returns (address) {
         return _sessions[_index];
     }
 

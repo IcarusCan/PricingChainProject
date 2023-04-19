@@ -38,7 +38,7 @@ contract Session {
     //Struct to hold general info of a session
     struct ISession {
         Product product; // 1 product/session
-        //Bidder[] bidded;
+        //Bidder[] _bidders;
         uint32 suggestedPrice;
         uint32 finalPrice;
         SessionState currentState;
@@ -48,7 +48,7 @@ contract Session {
     //Map to save bidder info
     mapping(uint8 => Bidder) private _bidders;
     mapping(address => uint8) private _idOf;
-    uint8 private _bidderCount;
+    uint8 private _bidderCount = 1;
 
     //Event that need to be listened
     event SessionStarted(
@@ -90,7 +90,7 @@ contract Session {
                 description: _description,
                 imageHashes: _imageHashes
             }),
-            //bidded: new Bidder[](0),
+            //_bidders: new Bidder[](0),
             suggestedPrice: 0,
             finalPrice: 0,
             currentState: SessionState.CREATE
@@ -107,6 +107,8 @@ contract Session {
     function pricingSession(
         uint32 _newPrice
     ) external _pricing _isWhitelisted _isCompleteRegistered nonReentrant {
+        require(_newPrice > 0);
+
         address _currentBidder = msg.sender;
         address _sessionAddr = address(this);
         uint32 oldPrice;
@@ -139,11 +141,13 @@ contract Session {
     function closeSession(
         uint32 _actual
     ) external _instate(SessionState.STOP) _onlyAdmin {
+        require(_actual > 0);
+
+        _sessions.currentState = SessionState.CLOSED;
         _sessions.suggestedPrice = calSuggestPrice();
         _sessions.finalPrice = _actual;
-        _sessions.currentState = SessionState.CLOSED;
 
-        for (uint8 id = 0; id < _bidderCount; id++) {
+        for (uint8 id = 1; id < _bidderCount; id++) {
             //Update IParticipant info setBidCount (addrBidder, bidCount)
             MainContractInstance.setBidDev(
                 _bidders[id].account,
@@ -159,6 +163,9 @@ contract Session {
         uint8 _id,
         uint32 _actualPrice
     ) private view _onlyAdmin returns (uint32) {
+        require(_id > 0);
+        require(_actualPrice > 0);
+
         address bidderAddr = _bidders[_id].account;
         uint32 curPrice = _bidders[_id].price;
         uint32 newDev;
@@ -169,36 +176,45 @@ contract Session {
             .bidDeviation;
 
         //Calculate new deviation of participant base on actual price
+        //Get 3 decimal point by newDev(*10^decimal) = newDev*1000
+        //The unit here is percentage, 500 (because of decimal above) mean 5%
         if (_actualPrice >= curPrice) {
-            newDev = ((_actualPrice - curPrice) * 100) / _actualPrice;
+            newDev = (((_actualPrice - curPrice) * 100) * 1000) / _actualPrice;
         } else {
-            newDev = ((curPrice - _actualPrice) * 100) / _actualPrice;
+            newDev = (((curPrice - _actualPrice) * 100) * 1000) / _actualPrice;
         }
 
         //Update deviation of participant base on current and new deviation
         calDev =
-            (curDev * uint32(_bidderCount) + newDev) /
-            (uint32(_bidderCount) + 1);
+            (curDev * uint32(_bidderCount - 1) + newDev) /
+            (uint32(_bidderCount - 1) + 1); //because init of bidderCount = 1
 
-        return calDev;
+        return calDev; // to get correct display, now div by 10^decimal = 10^3
     }
 
     function calSuggestPrice() public view returns (uint32) {
+        require(_bidderCount > 1, "Session: No bidder to calculate!");
+
         uint32 _curDev;
         uint32 _devSum;
         uint32 _priceSum;
         uint32 _suggestedPrice;
 
-        for (uint8 id = 0; id < _bidderCount; id++) {
+        for (uint8 id = 1; id < _bidderCount; id++) {
             uint32 bidderPrice = _bidders[id].price;
             address account = _bidders[id].account;
 
-            _curDev = MainContractInstance.participants(account).bidDeviation;
+            _curDev =
+                MainContractInstance.participants(account).bidDeviation /
+                1000; //div by 10^decimal
             _devSum += _curDev;
             _priceSum += bidderPrice * (100 - _curDev);
         }
 
-        _suggestedPrice = _priceSum / ((100 * uint32(_bidderCount)) - _devSum);
+        //  Get 2 decimal point by _suggestedPrice(*10^decimal) = _suggestedPrice*100
+        _suggestedPrice =
+            _priceSum /
+            ((100 * uint32(_bidderCount - 1)) - _devSum);
         return _suggestedPrice;
     }
 
@@ -247,7 +263,7 @@ contract Session {
 
     modifier _isCompleteRegistered() {
         require(
-            MainContractInstance._completeAccount(msg.sender),
+            MainContractInstance.completeAccount(msg.sender),
             "Session: Register your Name and Email first!"
         );
         _;

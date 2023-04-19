@@ -347,7 +347,7 @@ const actions = {
     // TODO: And loop through all sessions to get information
 
     for (let index = 0; index < nSession; index++) {
-      console.log("index getSessions:", index);
+      // console.log("index getSessions:", index);
       // Get session address
       let session = await contractFunctions.sessions(index).call();
       // Load the session contract instance on network
@@ -372,9 +372,9 @@ const actions = {
 
       if (accounts[0] !== admin) {
         let bidderId = await contract.methods.getBidderId(accounts[0]).call();
-        console.log("bidderId", bidderId);
+        // console.log("bidderId", bidderId);
         let bidderInfo = await contract.methods.getBidderInfo(bidderId).call();
-        console.log("bidderInfo", bidderInfo);
+        // console.log("bidderInfo", bidderInfo);
         price = bidderInfo.price;
       }
 

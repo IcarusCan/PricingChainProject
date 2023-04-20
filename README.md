@@ -1,15 +1,19 @@
-# How to run (update 05/04/2023)
+# How to run (update 20/04/2023)
 
 - Front-end: using node v10.24.1
 - Truffle: use latest node version
 - Ganache: v7.7.7 (@ganache/cli: 0.8.6, @ganache/core: 0.8.6) or latest
-
-# Prerequisite
-
-- Ganache (https://www.trufflesuite.com/ganache) for Running local Ethereum network
 - NodeJS (https://nodejs.org/en/) for build, test, and running Frontend application
-- Truffle (https://www.trufflesuite.com/truffle) for compile and deploy Smart contract
 - Metamask Chrome's extension for manage accounts and transations.
+
+- Step 1: Open a Terminal, Run Ganache: ganache -d --acctKeys keys.json
+- Step 2: Open other Terminal, `cd truffle` then `truffle console`
+- Step 3: In truffle development enviroment: `networks --clean` then `migrate --reset`
+- Step 4: Replace the Main Contract Address in `config.js` with new deployed address.
+- Step 5: In another Terminal, check the version of Node, it should be v10.24.1
+- Step 6: Execute `npm start` to run frontend.
+- Step 7: Clear Metamask Activity log in order to reset nonce to match your local dev env (Ganache)
+- Step 8: Explore Dapp
 
 ## Truffle configuration
 

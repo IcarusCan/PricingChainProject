@@ -12,7 +12,7 @@ import "./css/index.css";
 import Main from "./contracts/Main.json";
 import Session from "./contracts/Session.json";
 
-const Fragment = (props, children) => children;
+// const Fragment = (props, children) => children;
 
 const Web3 = require("web3");
 let web3js;

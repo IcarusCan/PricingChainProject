@@ -64,56 +64,118 @@ const Product = ({ product, newProduct, input, create, isAdmin, fn }) => {
             <div class="card-footer">
               <div class="input-group">
                 <div class="input-group-prepend">
-                  <button
-                    class="btn btn-outline-primary"
-                    type="button"
-                    onclick={(e) => fn({ action: "start", data: "" })}
-                  >
-                    Start
-                  </button>
-                  <button
-                    class="btn btn-outline-primary"
-                    type="button"
-                    onclick={(e) => fn({ action: "stop", data: "" })}
-                  >
-                    Stop
-                  </button>
+                  {product.status === "CREATE" ? (
+                    <button
+                      class="btn btn-outline-primary"
+                      type="button"
+                      onclick={(e) => fn({ action: "start", data: "" })}
+                    >
+                      Start
+                    </button>
+                  ) : (
+                    <button
+                      class="btn btn-outline-primary"
+                      type="button"
+                      disabled
+                    >
+                      Start
+                    </button>
+                  )}
+
+                  {product.status === "PRICING" ? (
+                    <button
+                      class="btn btn-outline-primary"
+                      type="button"
+                      onclick={(e) => fn({ action: "stop", data: "" })}
+                    >
+                      Stop
+                    </button>
+                  ) : (
+                    <button
+                      class="btn btn-outline-primary"
+                      type="button"
+                      disabled
+                    >
+                      Stop
+                    </button>
+                  )}
                 </div>
-                <input
-                  type="number"
-                  class="form-control"
-                  placeholder="price"
-                  oninput={(e) => (price = e.target.value)}
-                />
-                <div class="input-group-append">
-                  <button
-                    class="btn btn-outline-primary"
-                    type="button"
-                    onclick={(e) => fn({ action: "close", data: price })}
-                  >
-                    Set price and close
-                  </button>
-                </div>
+
+                {product.status === "STOP" ? (
+                  <>
+                    <input
+                      type="number"
+                      class="form-control"
+                      placeholder="price"
+                      oninput={(e) => (price = e.target.value)}
+                    />
+                    <div class="input-group-append">
+                      <button
+                        class="btn btn-outline-primary"
+                        type="button"
+                        onclick={(e) => fn({ action: "close", data: price })}
+                      >
+                        Set price and close
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="number"
+                      class="form-control"
+                      placeholder="price"
+                      disabled
+                    />
+                    <div class="input-group-append">
+                      <button
+                        class="btn btn-outline-primary"
+                        type="button"
+                        disabled
+                      >
+                        Set price and close
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           ) : (
             <div class="card-footer">
               <div class="input-group">
-                <input
-                  type="number"
-                  class="form-control"
-                  placeholder="price"
-                  oninput={(e) => (price = e.target.value)}
-                />
-                <div class="input-group-append">
-                  <button
-                    class="btn btn-primary"
-                    type="button"
-                    onclick={(e) => fn({ action: "pricing", data: price })}
-                  >
-                    Propose price
-                  </button>
-                </div>
+                {product.status === "START" || product.status === "PRICING" ? (
+                  <>
+                    <input
+                      type="number"
+                      class="form-control"
+                      placeholder="price"
+                      oninput={(e) => (price = e.target.value)}
+                    />
+                    <div class="input-group-append">
+                      <button
+                        class="btn btn-primary"
+                        type="button"
+                        onclick={(e) => fn({ action: "pricing", data: price })}
+                      >
+                        Propose price
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="number"
+                      class="form-control"
+                      placeholder="price"
+                      disabled
+                    />
+                    <div class="input-group-append">
+                      <button class="btn btn-primary" type="button" disabled>
+                        Propose price
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}

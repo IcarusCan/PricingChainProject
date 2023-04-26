@@ -122,7 +122,7 @@ contract Session {
             _sessions.currentState = SessionState.PRICING;
 
             //If bidded, IParticipant -> bidCount need update
-            MainContractInstance.setBidCount(_currentBidder); // +1 when called
+            MainContractInstance.setBidCount(_currentBidder, address(this)); // +1 when called
             //Increase ID only once
             _bidderCount++;
         } else {
@@ -148,8 +148,9 @@ contract Session {
         _sessions.finalPrice = _actual;
 
         for (uint8 id = 1; id < _bidderCount; id++) {
-            //Update IParticipant info setBidCount (addrBidder, bidCount)
+            //Update IParticipant info setBidDev
             MainContractInstance.setBidDev(
+                address(this),
                 _bidders[id].account,
                 calDeviation(id, _actual)
             );

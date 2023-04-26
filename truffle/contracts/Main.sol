@@ -132,14 +132,27 @@ contract Main {
     }
 
     // Update bidCount of participant
-    function setBidCount(address _addr) external returns (uint32) {
-        return _participants[_addr].bidCount++;
+    function setBidCount(address _parAddr, address _sessionAddr) external {
+        require(
+            msg.sender == _sessionAddr,
+            "Main: Only Session contract can update"
+        );
+
+        _participants[_parAddr].bidCount++;
     }
 
     // Update bidDeviation of participant
-    function setBidDev(address _addr, uint32 _dev) external returns (uint32) {
-        _participants[_addr].bidDeviation = _dev;
-        return _dev;
+    function setBidDev(
+        address _sessionAddr,
+        address _parAddr,
+        uint32 _dev
+    ) external {
+        require(
+            msg.sender == _sessionAddr,
+            "Main: Only Session contract can update"
+        );
+
+        _participants[_parAddr].bidDeviation = _dev;
     }
 
     // Get number of participants
@@ -160,13 +173,13 @@ contract Main {
         return _hasBid[_participant][_sessionAddr];
     }
 
-    function setHasBid(
-        address _participant,
-        address _sessionAddr
-    ) external returns (bool) {
-        bool setBid = true;
-        _hasBid[_participant][_sessionAddr] = setBid;
-        return setBid;
+    function setHasBid(address _participant, address _sessionAddr) external {
+        require(
+            msg.sender == _sessionAddr,
+            "Main: Only Session contract can update"
+        );
+
+        _hasBid[_participant][_sessionAddr] = true;
     }
 
     // Get number of sessions
